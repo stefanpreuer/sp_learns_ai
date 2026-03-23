@@ -1,0 +1,31 @@
+# Line endings
+# ============
+
+# Disable end-of-line conversion for all files by default.
+#
+# Defining `text` attribute explicitly also avoids fallback to 'core.autocrlf'
+# git config setting, which is not shared and therefore fragile.
+#
+# Override folder where this default does not fit by local `.gitattributes`
+
+* -text
+
+# Files to always disable enable end-of-line conversion
+# -----------------------------------------------------
+# `<path> -text`
+
+# Files to always enable end-of-line normalization
+# ------------------------------------------------
+# `<path> text`
+
+# Files that will always have LF line endings on checkout
+# -------------------------------------------------------
+# `<path> text eol=lf`
+
+# Files that will always have CRLF line endings on checkout
+# ---------------------------------------------------------
+# `<path> text eol=crlf`
+
+# Files that are truly binary and should not be modified
+# ------------------------------------------------------
+# `<path> binary`
