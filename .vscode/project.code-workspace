@@ -4,8 +4,13 @@
       "name": "root",
       "path": "../"
     },
-    { "name": "projects > llm_from_scratch",
+    {
+      "name": "projects > llm_from_scratch",
       "path": "../projects/llm_from_scratch"
+    },
+    {
+      "name": "projects > ml_ai_pytorch_playground",
+      "path": "../projects/ml_ai_pytorch_playground"
     }
   ],
   "settings": {},
