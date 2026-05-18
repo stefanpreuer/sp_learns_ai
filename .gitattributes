@@ -1,14 +1,30 @@
 # Line endings
 # ============
 
-# Disable end-of-line conversion for all files by default.
+# Default
+# -------
 #
-# Defining `text` attribute explicitly also avoids fallback to 'core.autocrlf'
+# Use `lf` line endings independent of platform. This simplifies working on
+# shared filesystems. E.g. WSL Linux on Windows host.
+#
+# Let Git decide if a file is text or binary but use `lf` in workspace.
+# This allows for `safeclrf` check to prevent accidental `crlf` commits, which
+# would not be the case with `-text`.
+#
+# Specifying the `text` attribute also avoids fallback to 'core.autocrlf'
 # git config setting, which is not shared and therefore fragile.
+#
+# Ensure following git config settings.
+#
+# ```
+# [core]
+#	autocrlf = false
+#	safecrlf = true
+# ```
 #
 # Override folder where this default does not fit by local `.gitattributes`
 
-* -text
+* text=auto eol=lf
 
 # Files to always disable enable end-of-line conversion
 # -----------------------------------------------------
