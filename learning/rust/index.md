@@ -20,7 +20,7 @@ What are the owners of values:
 
 The ownership tree is reshaped by moving values from one owner to another and by dropping values at the end of the lifetime of an owner. All tracked at compile time and enforced by the code generated based on this semantic model.
 
-ownership, reborrow and Non-Lexical Lifetimes (NLL).
+There is a special type `Box<T>` representing on owning 
 
 ### Moving values
 
@@ -49,6 +49,36 @@ let y;
 // println!(y); // This would would result in a compiler-error though.
 ```
 
-### Reference counted references
+### Heap allocated values
 
-In exceptional cases it might be beneficial to support shared ownership of a value with dynamic lifetime ending when last owner's lifetime ends. Rust provides `Rc` and `Arc` types for this, which implement reference counting to achieve shared ownership. This is similar to what garbage collection does, although dropping does not happen as an asynchronous background activity, but synchronously on last owner's lifetime ending.
+Rust allocates values in-place by default, like on the stack for local variables or in-place in the memory of a struct. However, for values of dynamic size types this is not possible due to in-place allocation requiring the size to be known statically. Also for values of large statically known size in-place allocation might be problematic due to cost of moving the value.
+
+For such cases dynamical allocation on the heap is required. Rust provides standard types for this, respecting the ownership model.
+
+**Exclusive ownership:**
+
+Corresponding to the default of ownership of a value allocated in-place, `Box<T>` represents ownership of a value allocated on the heap. Like the ownership of in-place values can be moved so the value of `Box` can be moved with memory-safety tracking of the compiler. So `Box` is a type of this special ownership semantics in the compiler's ownership model.
+
+```rust
+let x = true;
+let x1 = x; // moving x to x1, leaving x unititialized
+
+let y = Box::new(true);
+let y1 = *y; // moving y's value out to y, leaving y uninitialized
+```
+
+**Shared ownership:**
+
+There are cases where it shared ownership of a value is needed, with a dynamic lifetime ending when last owner's lifetime ends. Rust provides `Rc<T>` and `Arc<T>` types for this, which implement reference counting to achieve shared ownership. This is similar to what garbage collection does, although dropping does not happen as an asynchronous background activity, but synchronously on last owner's lifetime ending.
+
+Values of shared ownership cannot be moved out and are immutable to ensure memory safety.
+
+## Contiguous memory
+
+Rust has arrays `[T; N]` of static length and vectors `Vec<T>` of dynamic length. The latter one dynamically reallocates heap if needed, but the value proper is of fixed size (a pointer to heap, size, and length).
+
+There is also another type representing contiguous - the size `[T]`. You can think of it like an array but of non-sized type with its memory size not known at compile time. Because of this it cannot be directly used where the size has to be known at compile time - like as type of a local variable or struct field.
+
+However, slices can be used by reference types `&[T]` or `&mut [T]`, or a smart pointer type `Box<[T]>`. Both cases use a fat-pointer value proper, holding the length in the value proper besides the actual pointer to the start of the memory region of the slice.
+
+Since arrays and vectors hold their elements in contiguous memory, both can be borrowed as ref slices. So ref slices are abstract types for using contiguous memory types.
