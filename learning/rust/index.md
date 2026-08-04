@@ -82,3 +82,62 @@ There is also another type representing contiguous - the size `[T]`. You can thi
 However, slices can be used by reference types `&[T]` or `&mut [T]`, or a smart pointer type `Box<[T]>`. Both cases use a fat-pointer value proper, holding the length in the value proper besides the actual pointer to the start of the memory region of the slice.
 
 Since arrays and vectors hold their elements in contiguous memory, both can be borrowed as ref slices. So ref slices are abstract types for using contiguous memory types.
+
+# Dynamically sized types
+
+Dynamically sized types (DST)[1] are types with a size known at run-time only. They are also colled *unsized*. These types are distinguished from *sized* types, represented by the `Sized` trait, which have fixed size at compile-time.
+
+Slices (`[T]`), trait objects (`dyn T`) or `str` are examples of DSTs.
+
+Because the size of DSTs is not known at compile-time, they cannot be used as types of variables, function parameters, const items, static items. Also, they are not allowed as struct fields or tuple elements, due to them inlining them. However, there is a special exception for structs, allowing the last field to be a DST, which turns the struct itself into a DST.
+
+DSTs are therefore typically used via fat-pointers. Fat-pointers have fixed size but additionally to the value pointed to hold some additional type specific information in the value proper - e.g. the length for slices, or the vtable for trait objects.
+
+# Dereferencing and reference conversion
+
+The dereferencing operator `*` is used to get the place of the referent. However, there is also a `Deref` trait, whose name is a bit confusing due to some kind of double role it plays.
+
+Let's look at the definition of Deref:
+
+```rust
+pub trait Deref {
+  type Target: ?Sized;
+
+  fn deref(&self) -> &Self::Target;
+}
+```
+
+So it is actually doing a ref conversion for a unique target type of a type. By this every type implementing `Deref` has a unique type to dereference to. E.g. `String` implements `Deref<Target=str>`, or `Vec<T>` implements `Deref<Target=T>`.
+
+There is also another ref conversion trait:
+
+```rust
+pub trait AsRef<T: ?Sized> {
+  fn as_ref(&self) -> &T;
+}
+```
+
+Compared to `Deref` it's target type is a type parameter and therefore allows multiple ref conversions for a type.
+
+`AsRef` is used for explicit conversion, typically in generic function definitions allowing overloaded parameter types. E.g. following function would allow any type that is ref convertible to `ExampleParam`:
+
+```
+struct ExampleParam {}
+
+fn example<T : AsRef<ExampleParam>>(parameter: T) {
+  let core = parameter.as_ref();
+  ...
+}
+```
+
+The target type of a `Deref` implementation however is unique and represents a unique ref conversion for smart pointer like types to there dedicated target type. The compiler does this conversion implicitly, and can do so since it's a 1:1 type relationship in contrast to the open type relationship of `AsRef`. Implicit calls to `Deref::deref`:
+
+- Dereferencing operator:
+
+    `*a` becomes `*(Deref::deref(&a))`
+
+- Value coercion:
+
+    `a.example()` becomes `A::example(Deref::deref(&a))`
+
+[1]: <https://doc.rust-lang.org/reference/dynamically-sized-types.html>
